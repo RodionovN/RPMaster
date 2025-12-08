@@ -165,11 +165,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   sidebar: {
-    flex: 1,
-    maxWidth: 100, // Ограничиваем ширину сайдбара
+    width: '15%', // Узкая полоска, но не слишком (минимум для клика)
+    maxWidth: 80,
+    minWidth: 60,
   },
   main: {
-    flex: 4,
+    flex: 1,
   },
 });
 
