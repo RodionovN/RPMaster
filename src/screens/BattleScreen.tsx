@@ -3,8 +3,10 @@ import { View, Text, StyleSheet, Button, TouchableOpacity } from 'react-native';
 import { InitiativeSidebar } from '../components/InitiativeSidebar';
 import { ParticipantDetail } from '../components/ParticipantDetail';
 import { DiceRoller } from '../components/DiceRoller';
+import { QuickRollResult } from '../components/QuickRollResult';
 import { useBattle } from '../context/BattleContext';
 import { Participant } from '../types';
+import { parseAndRoll, RollResult } from '../utils/diceRoller';
 
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -29,6 +31,7 @@ export const BattleScreen: React.FC = () => {
   } = useBattle();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [diceModal, setDiceModal] = useState<{ visible: boolean; formula?: string | null }>({ visible: false });
+  const [quickRoll, setQuickRoll] = useState<RollResult | null>(null);
 
   // Автоматически выбираем первого участника при загрузке или изменении списка
   useEffect(() => {
@@ -73,7 +76,14 @@ export const BattleScreen: React.FC = () => {
   };
 
   const handleRollRequest = (formula: string) => {
-    setDiceModal({ visible: true, formula });
+    try {
+      const result = parseAndRoll(formula);
+      setQuickRoll(result);
+    } catch (e) {
+      console.warn('Roll error:', e);
+      // Если ошибка парсинга, можно открыть полный дайсомет как fallback, но лучше просто игнорировать или показать алерт
+      // setDiceModal({ visible: true, formula }); 
+    }
   };
 
   return (
@@ -149,6 +159,11 @@ export const BattleScreen: React.FC = () => {
         visible={diceModal.visible} 
         onClose={() => setDiceModal({ visible: false })} 
         initialFormula={diceModal.formula}
+      />
+
+      <QuickRollResult 
+        result={quickRoll}
+        onClose={() => setQuickRoll(null)}
       />
     </View>
   );
