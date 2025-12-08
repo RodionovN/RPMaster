@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   diceButton: {
-    width: '22%', // 4 в ряд (100% / 4 - отступы)
-    aspectRatio: 1,
+    width: 60,
+    height: 60,
     backgroundColor: '#e3f2fd',
     borderRadius: 8,
     justifyContent: 'center',
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     borderColor: '#2196f3',
   },
   diceButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1565c0',
   },
