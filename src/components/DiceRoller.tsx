@@ -102,13 +102,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   diceButton: {
-    width: '23%',
-    aspectRatio: 1,
+    width: '30%', // По 3 кнопки в ряд
+    aspectRatio: 1.2, // Немного прямоугольные
     backgroundColor: '#e3f2fd',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#2196f3',
   },
