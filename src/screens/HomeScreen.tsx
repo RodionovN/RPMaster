@@ -4,10 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 // Define the navigation types here or in a separate types file
-export type RootStackParamList = {
-  Home: undefined;
-  Battle: undefined;
-};
+// Types are now defined in AppNavigator.tsx to avoid circular dependency
+import { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -22,6 +20,12 @@ export const HomeScreen: React.FC = () => {
           title="Начать бой" 
           onPress={() => navigation.navigate('Battle')} 
           color="#2196f3"
+        />
+        <View style={{ height: 16 }} />
+        <Button 
+          title="Импорт персонажа" 
+          onPress={() => navigation.navigate('Import')} 
+          color="#9c27b0"
         />
       </View>
     </View>
