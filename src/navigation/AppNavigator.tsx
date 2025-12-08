@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeScreen } from '../screens/HomeScreen';
 import { BattleScreen } from '../screens/BattleScreen';
@@ -22,8 +22,10 @@ export const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer
       theme={{
+        ...DefaultTheme,
         dark: false, // Override system, we handle colors manually
         colors: {
+          ...DefaultTheme.colors,
           primary: theme.colors.primary,
           background: theme.colors.background,
           card: theme.colors.surface,
