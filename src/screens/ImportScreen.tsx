@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Button, Alert, ActivityIndicator, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
@@ -31,17 +31,35 @@ export const ImportScreen: React.FC = () => {
       }
 
       const asset = result.assets[0];
-      const fileContent = await FileSystem.readAsStringAsync(asset.uri);
+      let fileContent: string;
+
+      try {
+        if (Platform.OS === 'web') {
+          // Для веб-версии читаем через fetch
+          const response = await fetch(asset.uri);
+          fileContent = await response.text();
+        } else {
+          // Для нативной версии читаем через FileSystem
+          fileContent = await FileSystem.readAsStringAsync(asset.uri);
+        }
+      } catch (readError) {
+        console.error('File read error:', readError);
+        Alert.alert('Ошибка чтения', 'Не удалось прочитать файл. ' + (readError as Error).message);
+        setLoading(false);
+        return;
+      }
+
+      console.log('File content length:', fileContent.length); // Debug log
       const participant = parseCharacterJson(fileContent);
 
       if (participant) {
         setPreview(participant);
       } else {
-        Alert.alert('Ошибка', 'Не удалось распознать формат файла');
+        Alert.alert('Ошибка формата', 'Не удалось распознать структуру файла JSON. Убедитесь, что это файл персонажа Long Story Short.');
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert('Ошибка', 'Произошла ошибка при чтении файла');
+      console.error('Import error:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при импорте: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
