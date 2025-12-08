@@ -129,6 +129,7 @@ export const BattleScreen: React.FC = () => {
         </View>
         <View style={styles.main}>
           <ParticipantDetail 
+            key={selectedParticipant?.id || 'empty'}
             participant={selectedParticipant}
             onUpdateHP={updateHP}
             onRemove={handleRemove}
