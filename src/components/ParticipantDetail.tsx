@@ -79,31 +79,39 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
   };
 
   const activeConditions = participant.conditions || [];
+  const [activeTab, setActiveTab] = useState<'main' | 'attacks' | 'abilities' | 'stats'>('main');
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-            <Text style={styles.name}>{participant.name}</Text>
-            <View style={styles.initContainer}>
-                <Text style={styles.initLabel}>Иниц:</Text>
-                <TextInput 
-                    style={styles.initInput}
-                    value={initInput}
-                    onChangeText={handleInitChange}
-                    keyboardType="number-pad"
-                    placeholder="0"
-                />
-            </View>
-        </View>
-        <TouchableOpacity 
-          style={styles.deleteButton} 
-          onPress={() => onRemove(participant.id)}
-        >
-          <Text style={styles.deleteButtonText}>Удалить</Text>
-        </TouchableOpacity>
-      </View>
+  const renderTabs = () => (
+    <View style={styles.tabContainer}>
+      <TouchableOpacity 
+        style={[styles.tab, activeTab === 'main' && styles.activeTab]} 
+        onPress={() => setActiveTab('main')}
+      >
+        <Text style={[styles.tabText, activeTab === 'main' && styles.activeTabText]}>Главное</Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={[styles.tab, activeTab === 'attacks' && styles.activeTab]} 
+        onPress={() => setActiveTab('attacks')}
+      >
+        <Text style={[styles.tabText, activeTab === 'attacks' && styles.activeTabText]}>Атаки</Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={[styles.tab, activeTab === 'abilities' && styles.activeTab]} 
+        onPress={() => setActiveTab('abilities')}
+      >
+        <Text style={[styles.tabText, activeTab === 'abilities' && styles.activeTabText]}>Спис.</Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={[styles.tab, activeTab === 'stats' && styles.activeTab]} 
+        onPress={() => setActiveTab('stats')}
+      >
+        <Text style={[styles.tabText, activeTab === 'stats' && styles.activeTabText]}>Статы</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
+  const renderMainContent = () => (
+    <>
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
           <Text style={styles.statLabel}>Класс брони</Text>
@@ -165,6 +173,92 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
             <Button title="Лечение" onPress={handleHeal} color="#4caf50" />
           </View>
         </View>
+      </View>
+    </>
+  );
+
+  const renderAttacks = () => (
+    <ScrollView style={styles.scrollContent}>
+      {participant.attacks?.map((attack, index) => (
+        <View key={index} style={styles.listItem}>
+          <Text style={styles.itemName}>{attack.name}</Text>
+          <Text style={styles.itemDetail}>Урон: {attack.damage}</Text>
+          <Text style={styles.itemDetail}>Мод: {attack.modifier}</Text>
+        </View>
+      ))}
+      {(!participant.attacks || participant.attacks.length === 0) && (
+        <Text style={styles.emptyText}>Нет данных об атаках</Text>
+      )}
+    </ScrollView>
+  );
+
+  const renderAbilities = () => (
+    <ScrollView style={styles.scrollContent}>
+      {participant.abilities?.map((ability, index) => (
+        <View key={index} style={styles.listItem}>
+          <Text style={styles.itemName}>{ability.name}</Text>
+          <Text style={styles.itemDescription}>{ability.description}</Text>
+        </View>
+      ))}
+      {(!participant.abilities || participant.abilities.length === 0) && (
+        <Text style={styles.emptyText}>Нет данных о способностях</Text>
+      )}
+    </ScrollView>
+  );
+
+  const renderStats = () => (
+    <ScrollView style={styles.scrollContent}>
+      <Text style={styles.subHeader}>Характеристики</Text>
+      <View style={styles.statsGrid}>
+        {participant.stats?.map((stat, index) => (
+          <View key={index} style={styles.statGridItem}>
+            <Text style={styles.statLabel}>{stat.name}</Text>
+            <Text style={styles.statValue}>{stat.value} ({stat.modifier >= 0 ? '+' : ''}{stat.modifier})</Text>
+          </View>
+        ))}
+      </View>
+      
+      <Text style={styles.subHeader}>Навыки</Text>
+      {participant.skills?.map((skill, index) => (
+        <View key={index} style={styles.skillRow}>
+          <Text style={styles.skillName}>{skill.name}</Text>
+          <Text style={styles.skillMod}>{skill.modifier >= 0 ? '+' : ''}{skill.modifier}</Text>
+        </View>
+      ))}
+    </ScrollView>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View>
+            <Text style={styles.name}>{participant.name}</Text>
+            <View style={styles.initContainer}>
+                <Text style={styles.initLabel}>Иниц:</Text>
+                <TextInput 
+                    style={styles.initInput}
+                    value={initInput}
+                    onChangeText={handleInitChange}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                />
+            </View>
+        </View>
+        <TouchableOpacity 
+          style={styles.deleteButton} 
+          onPress={() => onRemove(participant.id)}
+        >
+          <Text style={styles.deleteButtonText}>Удалить</Text>
+        </TouchableOpacity>
+      </View>
+
+      {renderTabs()}
+
+      <View style={styles.contentContainer}>
+        {activeTab === 'main' && renderMainContent()}
+        {activeTab === 'attacks' && renderAttacks()}
+        {activeTab === 'abilities' && renderAbilities()}
+        {activeTab === 'stats' && renderStats()}
       </View>
 
       <ConditionModal
@@ -309,6 +403,95 @@ const styles = StyleSheet.create({
   },
   buttonWrapper: {
     flex: 1,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  tab: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginRight: 8,
+  },
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#2196f3',
+  },
+  tabText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  activeTabText: {
+    color: '#2196f3',
+    fontWeight: 'bold',
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  listItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  itemDetail: {
+    fontSize: 14,
+    color: '#666',
+  },
+  itemDescription: {
+    fontSize: 14,
+    color: '#444',
+    marginTop: 4,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#999',
+    marginTop: 20,
+    fontStyle: 'italic',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+  },
+  statGridItem: {
+    width: '33%',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  subHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    marginTop: 12,
+    color: '#333',
+    paddingHorizontal: 12,
+  },
+  skillRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  skillName: {
+    fontSize: 14,
+    color: '#333',
+  },
+  skillMod: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
   },
 });
 
