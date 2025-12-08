@@ -13,6 +13,8 @@ export const BattleScreen: React.FC = () => {
     removeParticipant, 
     updateHP,
     updateInitiative,
+    addCondition,
+    removeCondition,
     sortParticipants
   } = useBattle();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -97,6 +99,8 @@ export const BattleScreen: React.FC = () => {
             onUpdateHP={updateHP}
             onRemove={handleRemove}
             onUpdateInitiative={updateInitiative}
+            onAddCondition={addCondition}
+            onRemoveCondition={removeCondition}
           />
         </View>
       </View>

@@ -1,22 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Button, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Participant } from '../types';
+import { ConditionModal } from './ConditionModal';
+import { CONDITIONS } from '../utils/conditions';
 
 interface ParticipantDetailProps {
   participant: Participant | null;
   onUpdateHP: (id: string, delta: number) => void;
   onRemove: (id: string) => void;
   onUpdateInitiative?: (id: string, value: number) => void;
+  onAddCondition?: (id: string, conditionId: string) => void;
+  onRemoveCondition?: (id: string, conditionId: string) => void;
 }
 
 export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({ 
   participant, 
   onUpdateHP,
   onRemove,
-  onUpdateInitiative
+  onUpdateInitiative,
+  onAddCondition,
+  onRemoveCondition
 }) => {
   const [hpInput, setHpInput] = useState('1');
   const [initInput, setInitInput] = useState('');
+  const [isConditionModalVisible, setConditionModalVisible] = useState(false);
 
   if (!participant) {
     return (
@@ -58,6 +65,19 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
     }
   };
 
+  const handleConditionToggle = (conditionId: string) => {
+    if (!participant || !onAddCondition || !onRemoveCondition) return;
+    
+    const hasCondition = participant.conditions?.includes(conditionId);
+    if (hasCondition) {
+      onRemoveCondition(participant.id, conditionId);
+    } else {
+      onAddCondition(participant.id, conditionId);
+    }
+  };
+
+  const activeConditions = participant.conditions || [];
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -96,6 +116,31 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
         </View>
       </View>
 
+      <View style={styles.conditionsContainer}>
+        <View style={styles.conditionsHeader}>
+            <Text style={styles.sectionTitle}>Состояния</Text>
+            <TouchableOpacity onPress={() => setConditionModalVisible(true)}>
+                <Text style={styles.addConditionText}>+ Добавить</Text>
+            </TouchableOpacity>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.conditionsList}>
+            {activeConditions.length === 0 && <Text style={styles.noConditions}>Нет активных состояний</Text>}
+            {activeConditions.map(cId => {
+                const condition = CONDITIONS.find(c => c.id === cId);
+                if (!condition) return null;
+                return (
+                    <TouchableOpacity 
+                        key={cId} 
+                        style={[styles.conditionBadge, { backgroundColor: condition.color }]}
+                        onPress={() => onRemoveCondition && onRemoveCondition(participant.id, cId)}
+                    >
+                        <Text style={styles.conditionText}>{condition.name} ✕</Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </ScrollView>
+      </View>
+
       <View style={styles.hpControls}>
         <Text style={styles.sectionTitle}>Управление здоровьем</Text>
         
@@ -119,6 +164,13 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
           </View>
         </View>
       </View>
+
+      <ConditionModal
+        visible={isConditionModalVisible}
+        onClose={() => setConditionModalVisible(false)}
+        onSelect={handleConditionToggle}
+        activeConditions={activeConditions}
+      />
     </View>
   );
 };
@@ -207,6 +259,37 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 16,
     color: '#333',
+  },
+  conditionsContainer: {
+    marginBottom: 20,
+  },
+  conditionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  addConditionText: {
+    color: '#2196f3',
+    fontWeight: 'bold',
+  },
+  conditionsList: {
+    flexDirection: 'row',
+  },
+  conditionBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  conditionText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  noConditions: {
+    color: '#999',
+    fontStyle: 'italic',
   },
   inputContainer: {
     marginBottom: 16,

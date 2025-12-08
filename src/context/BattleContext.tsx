@@ -8,6 +8,8 @@ interface BattleContextType {
   removeParticipant: (id: string) => void;
   updateHP: (id: string, delta: number) => void;
   updateInitiative: (id: string, value: number) => void;
+  addCondition: (id: string, conditionId: string) => void;
+  removeCondition: (id: string, conditionId: string) => void;
   sortParticipants: () => void;
 }
 
@@ -70,6 +72,27 @@ export const BattleProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     );
   };
 
+  const addCondition = (id: string, conditionId: string) => {
+    setParticipants((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const currentConditions = p.conditions || [];
+        if (currentConditions.includes(conditionId)) return p;
+        return { ...p, conditions: [...currentConditions, conditionId] };
+      })
+    );
+  };
+
+  const removeCondition = (id: string, conditionId: string) => {
+    setParticipants((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const currentConditions = p.conditions || [];
+        return { ...p, conditions: currentConditions.filter(c => c !== conditionId) };
+      })
+    );
+  };
+
   const sortParticipants = () => {
     setParticipants((prev) =>
       [...prev].sort((a, b) => {
@@ -88,6 +111,8 @@ export const BattleProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         removeParticipant, 
         updateHP,
         updateInitiative,
+        addCondition,
+        removeCondition,
         sortParticipants
       }}
     >

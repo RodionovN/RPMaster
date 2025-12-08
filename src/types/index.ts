@@ -5,6 +5,7 @@ export interface Participant {
   currentHP: number;
   armorClass: number;
   initiative?: number;
+  conditions?: string[];
 }
 
 export interface Player extends Participant {
