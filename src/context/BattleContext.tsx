@@ -4,6 +4,7 @@ import { StorageService } from '../services/StorageService';
 
 interface BattleContextType {
   participants: Participant[];
+  activeParticipantId: string | null;
   addParticipant: (participant: Participant) => void;
   removeParticipant: (id: string) => void;
   updateHP: (id: string, delta: number) => void;
@@ -11,12 +12,15 @@ interface BattleContextType {
   addCondition: (id: string, conditionId: string) => void;
   removeCondition: (id: string, conditionId: string) => void;
   sortParticipants: () => void;
+  nextTurn: () => void;
+  prevTurn: () => void;
 }
 
 const BattleContext = createContext<BattleContextType | undefined>(undefined);
 
 export const BattleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [activeParticipantId, setActiveParticipantId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load state on mount
@@ -103,17 +107,50 @@ export const BattleProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     );
   };
 
+  const nextTurn = () => {
+    if (participants.length === 0) return;
+    if (!activeParticipantId) {
+      setActiveParticipantId(participants[0].id);
+      return;
+    }
+    const currentIndex = participants.findIndex(p => p.id === activeParticipantId);
+    if (currentIndex === -1) {
+      setActiveParticipantId(participants[0].id);
+    } else {
+      const nextIndex = (currentIndex + 1) % participants.length;
+      setActiveParticipantId(participants[nextIndex].id);
+    }
+  };
+
+  const prevTurn = () => {
+    if (participants.length === 0) return;
+    if (!activeParticipantId) {
+      setActiveParticipantId(participants[participants.length - 1].id);
+      return;
+    }
+    const currentIndex = participants.findIndex(p => p.id === activeParticipantId);
+    if (currentIndex === -1) {
+      setActiveParticipantId(participants[0].id);
+    } else {
+      const prevIndex = (currentIndex - 1 + participants.length) % participants.length;
+      setActiveParticipantId(participants[prevIndex].id);
+    }
+  };
+
   return (
     <BattleContext.Provider 
       value={{ 
         participants, 
+        activeParticipantId,
         addParticipant, 
         removeParticipant, 
         updateHP,
         updateInitiative,
         addCondition,
         removeCondition,
-        sortParticipants
+        sortParticipants,
+        nextTurn,
+        prevTurn
       }}
     >
       {children}

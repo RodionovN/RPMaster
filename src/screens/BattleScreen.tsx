@@ -16,13 +16,16 @@ export const BattleScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { 
     participants, 
+    activeParticipantId,
     addParticipant, 
     removeParticipant, 
     updateHP,
     updateInitiative,
     addCondition,
     removeCondition,
-    sortParticipants
+    sortParticipants,
+    nextTurn,
+    prevTurn
   } = useBattle();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isDiceRollerVisible, setDiceRollerVisible] = useState(false);
@@ -80,6 +83,15 @@ export const BattleScreen: React.FC = () => {
           >
             <Text style={{fontSize: 16}}>⇅ Иниц</Text>
           </TouchableOpacity>
+          <View style={{ width: 10 }} />
+          <View style={styles.turnControls}>
+            <TouchableOpacity onPress={prevTurn} style={styles.turnButton}>
+              <Text style={styles.turnButtonText}>◀</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={nextTurn} style={styles.turnButton}>
+              <Text style={styles.turnButtonText}>▶</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <View style={styles.controls}>
           <TouchableOpacity onPress={() => setDiceRollerVisible(true)} style={styles.diceButton}>
@@ -104,6 +116,7 @@ export const BattleScreen: React.FC = () => {
           <InitiativeSidebar 
             participants={participants}
             selectedId={selectedId}
+            activeId={activeParticipantId}
             onSelect={setSelectedId}
           />
         </View>
@@ -146,6 +159,20 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
+  },
+  turnControls: {
+    flexDirection: 'row',
+    marginLeft: 10,
+  },
+  turnButton: {
+    backgroundColor: '#e0e0e0',
+    padding: 8,
+    marginHorizontal: 2,
+    borderRadius: 4,
+  },
+  turnButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   controls: {
     flexDirection: 'row',
