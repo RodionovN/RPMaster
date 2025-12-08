@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
+import { View, Text, StyleSheet, Button, TouchableOpacity } from 'react-native';
 import { InitiativeSidebar } from '../components/InitiativeSidebar';
 import { ParticipantDetail } from '../components/ParticipantDetail';
+import { DiceRoller } from '../components/DiceRoller';
 import { useBattle } from '../context/BattleContext';
 import { Participant } from '../types';
 
 export const BattleScreen: React.FC = () => {
   const { participants, addParticipant, removeParticipant, updateHP } = useBattle();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isDiceRollerVisible, setDiceRollerVisible] = useState(false);
 
   // Автоматически выбираем первого участника при загрузке или изменении списка
   useEffect(() => {
@@ -54,6 +56,10 @@ export const BattleScreen: React.FC = () => {
       <View style={styles.topBar}>
         <Text style={styles.title}>Бой</Text>
         <View style={styles.controls}>
+          <TouchableOpacity onPress={() => setDiceRollerVisible(true)} style={styles.diceButton}>
+            <Text style={styles.diceButtonText}>🎲</Text>
+          </TouchableOpacity>
+          <View style={{ width: 10 }} />
           <Button title="+ Игрок" onPress={handleAddPlayer} />
           <View style={{ width: 10 }} />
           <Button title="+ Монстр" onPress={handleAddMonster} color="#ff9800" />
@@ -76,6 +82,11 @@ export const BattleScreen: React.FC = () => {
           />
         </View>
       </View>
+
+      <DiceRoller 
+        visible={isDiceRollerVisible} 
+        onClose={() => setDiceRollerVisible(false)} 
+      />
     </View>
   );
 };
@@ -102,6 +113,16 @@ const styles = StyleSheet.create({
   },
   controls: {
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  diceButton: {
+    padding: 8,
+    backgroundColor: '#eee',
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  diceButtonText: {
+    fontSize: 20,
   },
   content: {
     flex: 1,
