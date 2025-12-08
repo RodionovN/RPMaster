@@ -11,6 +11,7 @@ interface ParticipantDetailProps {
   onUpdateInitiative?: (id: string, value: number) => void;
   onAddCondition?: (id: string, conditionId: string) => void;
   onRemoveCondition?: (id: string, conditionId: string) => void;
+  onRoll?: (formula: string) => void;
 }
 
 export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({ 
@@ -19,7 +20,8 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
   onRemove,
   onUpdateInitiative,
   onAddCondition,
-  onRemoveCondition
+  onRemoveCondition,
+  onRoll
 }) => {
   const [hpInput, setHpInput] = useState('1');
   const [initInput, setInitInput] = useState('');
@@ -177,13 +179,27 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
     </>
   );
 
+  const handleRoll = (formula: string) => {
+    if (onRoll) {
+      onRoll(formula);
+    }
+  };
+
   const renderAttacks = () => (
     <ScrollView style={styles.scrollContent}>
       {participant.attacks?.map((attack, index) => (
         <View key={index} style={styles.listItem}>
           <Text style={styles.itemName}>{attack.name}</Text>
-          <Text style={styles.itemDetail}>Урон: {attack.damage}</Text>
-          <Text style={styles.itemDetail}>Мод: {attack.modifier}</Text>
+          <View style={styles.attackRolls}>
+            <TouchableOpacity onPress={() => handleRoll(attack.damage)}>
+              <Text style={styles.itemDetail}>Урон: <Text style={styles.clickable}>{attack.damage}</Text></Text>
+            </TouchableOpacity>
+            {attack.modifier && (
+                <TouchableOpacity onPress={() => handleRoll(`1d20${attack.modifier.startsWith('+') || attack.modifier.startsWith('-') ? attack.modifier : '+' + attack.modifier}`)}>
+                    <Text style={styles.itemDetail}>Мод: <Text style={styles.clickable}>{attack.modifier}</Text></Text>
+                </TouchableOpacity>
+            )}
+          </View>
         </View>
       ))}
       {(!participant.attacks || participant.attacks.length === 0) && (
@@ -213,17 +229,23 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
         {participant.stats?.map((stat, index) => (
           <View key={index} style={styles.statGridItem}>
             <Text style={styles.statLabel}>{stat.name}</Text>
-            <Text style={styles.statValue}>{stat.value} ({stat.modifier >= 0 ? '+' : ''}{stat.modifier})</Text>
+            <TouchableOpacity onPress={() => handleRoll(`1d20${stat.modifier >= 0 ? '+' : ''}${stat.modifier}`)}>
+                <Text style={[styles.statValue, styles.clickable]}>{stat.value} ({stat.modifier >= 0 ? '+' : ''}{stat.modifier})</Text>
+            </TouchableOpacity>
           </View>
         ))}
       </View>
       
       <Text style={styles.subHeader}>Навыки</Text>
       {participant.skills?.map((skill, index) => (
-        <View key={index} style={styles.skillRow}>
+        <TouchableOpacity 
+            key={index} 
+            style={styles.skillRow}
+            onPress={() => handleRoll(`1d20${skill.modifier >= 0 ? '+' : ''}${skill.modifier}`)}
+        >
           <Text style={styles.skillName}>{skill.name}</Text>
-          <Text style={styles.skillMod}>{skill.modifier >= 0 ? '+' : ''}{skill.modifier}</Text>
-        </View>
+          <Text style={[styles.skillMod, styles.clickable]}>{skill.modifier >= 0 ? '+' : ''}{skill.modifier}</Text>
+        </TouchableOpacity>
       ))}
     </ScrollView>
   );
@@ -493,5 +515,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
+  clickable: {
+    color: '#2196f3',
+    fontWeight: 'bold',
+  },
+  attackRolls: {
+    flexDirection: 'row',
+    gap: 16,
+  }
 });
 

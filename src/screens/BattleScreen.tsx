@@ -28,7 +28,7 @@ export const BattleScreen: React.FC = () => {
     prevTurn
   } = useBattle();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isDiceRollerVisible, setDiceRollerVisible] = useState(false);
+  const [diceModal, setDiceModal] = useState<{ visible: boolean; formula?: string | null }>({ visible: false });
 
   // Автоматически выбираем первого участника при загрузке или изменении списка
   useEffect(() => {
@@ -72,6 +72,10 @@ export const BattleScreen: React.FC = () => {
     }
   };
 
+  const handleRollRequest = (formula: string) => {
+    setDiceModal({ visible: true, formula });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
@@ -94,7 +98,7 @@ export const BattleScreen: React.FC = () => {
           </View>
         </View>
         <View style={styles.controls}>
-          <TouchableOpacity onPress={() => setDiceRollerVisible(true)} style={styles.diceButton}>
+          <TouchableOpacity onPress={() => setDiceModal({ visible: true })} style={styles.diceButton}>
             <Text style={styles.diceButtonText}>🎲</Text>
           </TouchableOpacity>
           <View style={{ width: 10 }} />
@@ -136,13 +140,15 @@ export const BattleScreen: React.FC = () => {
             onUpdateInitiative={updateInitiative}
             onAddCondition={addCondition}
             onRemoveCondition={removeCondition}
+            onRoll={handleRollRequest}
           />
         </View>
       </View>
 
       <DiceRoller 
-        visible={isDiceRollerVisible} 
-        onClose={() => setDiceRollerVisible(false)} 
+        visible={diceModal.visible} 
+        onClose={() => setDiceModal({ visible: false })} 
+        initialFormula={diceModal.formula}
       />
     </View>
   );

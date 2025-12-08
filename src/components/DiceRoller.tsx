@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
-import { rollDice, RollResult } from '../utils/diceRoller';
+import { rollDice, RollResult, parseAndRoll } from '../utils/diceRoller';
 
 interface DiceRollerProps {
   visible: boolean;
   onClose: () => void;
+  initialFormula?: string | null;
 }
 
 const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100];
 
-export const DiceRoller: React.FC<DiceRollerProps> = ({ visible, onClose }) => {
+export const DiceRoller: React.FC<DiceRollerProps> = ({ visible, onClose, initialFormula }) => {
   const [history, setHistory] = useState<RollResult[]>([]);
+
+  useEffect(() => {
+    if (visible && initialFormula) {
+      try {
+        const result = parseAndRoll(initialFormula);
+        setHistory(prev => [result, ...prev].slice(0, 10));
+      } catch (e) {
+        console.warn('Invalid formula:', initialFormula);
+      }
+    }
+  }, [visible, initialFormula]);
 
   const handleRoll = (sides: number) => {
     const result = rollDice(1, sides);
