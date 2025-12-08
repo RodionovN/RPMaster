@@ -25,6 +25,13 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
   const [initInput, setInitInput] = useState('');
   const [isConditionModalVisible, setConditionModalVisible] = useState(false);
 
+  // Обновляем initInput при смене участника
+  React.useEffect(() => {
+    if (participant) {
+      setInitInput(participant.initiative?.toString() || '');
+    }
+  }, [participant?.id, participant?.initiative]);
+
   if (!participant) {
     return (
       <View style={styles.container}>
@@ -32,11 +39,6 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
       </View>
     );
   }
-
-  // Обновляем initInput при смене участника
-  React.useEffect(() => {
-    setInitInput(participant.initiative?.toString() || '');
-  }, [participant.id, participant.initiative]);
 
   const hpPercentage = (participant.currentHP / participant.maxHP) * 100;
   const hpColor = hpPercentage > 60 ? '#4caf50' : hpPercentage > 30 ? '#ff9800' : '#f44336';
