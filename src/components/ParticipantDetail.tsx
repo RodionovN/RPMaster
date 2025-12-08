@@ -24,6 +24,7 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
   const [hpInput, setHpInput] = useState('1');
   const [initInput, setInitInput] = useState('');
   const [isConditionModalVisible, setConditionModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<'main' | 'attacks' | 'abilities' | 'stats'>('main');
 
   // Обновляем initInput при смене участника
   React.useEffect(() => {
@@ -79,7 +80,6 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
   };
 
   const activeConditions = participant.conditions || [];
-  const [activeTab, setActiveTab] = useState<'main' | 'attacks' | 'abilities' | 'stats'>('main');
 
   const renderTabs = () => (
     <View style={styles.tabContainer}>
