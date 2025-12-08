@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Participant } from '../types';
+import { StorageService } from '../services/StorageService';
 
 interface BattleContextType {
   participants: Participant[];
@@ -11,11 +12,34 @@ interface BattleContextType {
 const BattleContext = createContext<BattleContextType | undefined>(undefined);
 
 export const BattleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [participants, setParticipants] = useState<Participant[]>([
-    { id: '1', name: 'Арагорн', maxHP: 50, currentHP: 45, armorClass: 16 },
-    { id: '2', name: 'Гэндальф', maxHP: 35, currentHP: 35, armorClass: 12 },
-    { id: '3', name: 'Гоблин', maxHP: 7, currentHP: 7, armorClass: 15 },
-  ]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load state on mount
+  useEffect(() => {
+    const loadState = async () => {
+      const savedParticipants = await StorageService.loadBattleState();
+      if (savedParticipants && savedParticipants.length > 0) {
+        setParticipants(savedParticipants);
+      } else {
+        // Default mock data if storage is empty
+        setParticipants([
+          { id: '1', name: 'Арагорн', maxHP: 50, currentHP: 45, armorClass: 16 },
+          { id: '2', name: 'Гэндальф', maxHP: 35, currentHP: 35, armorClass: 12 },
+          { id: '3', name: 'Гоблин', maxHP: 7, currentHP: 7, armorClass: 15 },
+        ]);
+      }
+      setIsLoaded(true);
+    };
+    loadState();
+  }, []);
+
+  // Save state on change
+  useEffect(() => {
+    if (isLoaded) {
+      StorageService.saveBattleState(participants);
+    }
+  }, [participants, isLoaded]);
 
   const addParticipant = (participant: Participant) => {
     setParticipants((prev) => [...prev, participant]);
