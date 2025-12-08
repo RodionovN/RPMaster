@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useBattle } from '../context/BattleContext';
+import { useLibrary } from '../context/LibraryContext';
 import { parseCharacterJson } from '../utils/jsonParser';
 import { Participant } from '../types';
 
@@ -14,6 +15,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Import'>;
 export const ImportScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { addParticipant } = useBattle();
+  const { addToLibrary } = useLibrary();
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<Participant | null>(null);
 
@@ -68,7 +70,8 @@ export const ImportScreen: React.FC = () => {
   const handleImport = () => {
     if (preview) {
       addParticipant(preview);
-      Alert.alert('Успех', `${preview.name} добавлен в бой!`, [
+      addToLibrary(preview);
+      Alert.alert('Успех', `${preview.name} добавлен в библиотеку и в бой!`, [
         { text: 'ОК', onPress: () => navigation.navigate('Battle') }
       ]);
     }

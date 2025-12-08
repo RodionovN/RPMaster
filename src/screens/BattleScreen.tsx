@@ -107,6 +107,13 @@ export const BattleScreen: React.FC = () => {
             <Text style={{fontSize: 16}}>📥</Text>
           </TouchableOpacity>
           <View style={{ width: 10 }} />
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('Library')} 
+            style={[styles.diceButton, { backgroundColor: '#b3e5fc', marginRight: 0 }]}
+          >
+            <Text style={{fontSize: 16}}>📚</Text>
+          </TouchableOpacity>
+          <View style={{ width: 10 }} />
           <Button title="+ Монстр" onPress={handleAddMonster} color="#ff9800" />
         </View>
       </View>

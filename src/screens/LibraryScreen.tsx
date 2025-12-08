@@ -1,0 +1,156 @@
+import React from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { useLibrary } from '../context/LibraryContext';
+import { useBattle } from '../context/BattleContext';
+import { Participant } from '../types';
+import { useNavigation } from '@react-navigation/native';
+import { useSettings } from '../context/SettingsContext';
+
+export const LibraryScreen: React.FC = () => {
+  const { library, removeFromLibrary } = useLibrary();
+  const { addParticipant } = useBattle();
+  const { theme } = useSettings();
+  const navigation = useNavigation();
+
+  const handleAddToBattle = (participant: Participant) => {
+    // Создаем копию участника с новым ID для боя
+    const newParticipant = {
+      ...participant,
+      id: Date.now().toString(),
+      initiative: 0, // Сбрасываем инициативу
+    };
+    addParticipant(newParticipant);
+    Alert.alert('Успешно', `${participant.name} добавлен в бой!`);
+  };
+
+  const confirmDelete = (id: string, name: string) => {
+    Alert.alert(
+      'Удаление',
+      `Вы уверены, что хотите удалить ${name} из библиотеки?`,
+      [
+        { text: 'Отмена', style: 'cancel' },
+        { text: 'Удалить', style: 'destructive', onPress: () => removeFromLibrary(id) },
+      ]
+    );
+  };
+
+  const renderItem = ({ item }: { item: Participant }) => (
+    <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+      <View style={styles.cardContent}>
+        <Text style={[styles.name, { color: theme.colors.text }]}>{item.name}</Text>
+        <Text style={[styles.details, { color: theme.colors.text }]}>
+          HP: {item.maxHP} | AC: {item.armorClass}
+        </Text>
+      </View>
+      <View style={styles.actions}>
+        <TouchableOpacity 
+          style={styles.addButton} 
+          onPress={() => handleAddToBattle(item)}
+        >
+          <Text style={styles.addButtonText}>В бой</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.deleteButton} 
+          onPress={() => confirmDelete(item.id, item.name)}
+        >
+          <Text style={styles.deleteButtonText}>✕</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {library.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: theme.colors.text }]}>Библиотека пуста</Text>
+          <Text style={[styles.subText, { color: theme.colors.text }]}>
+            Импортируйте персонажей через меню "Импорт", чтобы добавить их сюда.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={library}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+        />
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  list: {
+    padding: 16,
+  },
+  card: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+  },
+  cardContent: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  details: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addButton: {
+    backgroundColor: '#4caf50',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  deleteButton: {
+    padding: 8,
+  },
+  deleteButtonText: {
+    fontSize: 18,
+    color: '#f44336',
+    fontWeight: 'bold',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  subText: {
+    fontSize: 16,
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+});
+

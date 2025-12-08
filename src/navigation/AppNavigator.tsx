@@ -5,6 +5,7 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { BattleScreen } from '../screens/BattleScreen';
 import { ImportScreen } from '../screens/ImportScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { LibraryScreen } from '../screens/LibraryScreen';
 import { useSettings } from '../context/SettingsContext';
 
 export type RootStackParamList = {
@@ -12,6 +13,7 @@ export type RootStackParamList = {
   Battle: undefined;
   Import: undefined;
   Settings: undefined;
+  Library: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -62,6 +64,11 @@ export const AppNavigator: React.FC = () => {
           name="Settings" 
           component={SettingsScreen} 
           options={{ title: 'Настройки' }}
+        />
+        <Stack.Screen 
+          name="Library" 
+          component={LibraryScreen} 
+          options={{ title: 'Библиотека' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
