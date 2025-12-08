@@ -7,7 +7,14 @@ import { useBattle } from '../context/BattleContext';
 import { Participant } from '../types';
 
 export const BattleScreen: React.FC = () => {
-  const { participants, addParticipant, removeParticipant, updateHP } = useBattle();
+  const { 
+    participants, 
+    addParticipant, 
+    removeParticipant, 
+    updateHP,
+    updateInitiative,
+    sortParticipants
+  } = useBattle();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isDiceRollerVisible, setDiceRollerVisible] = useState(false);
 
@@ -29,6 +36,7 @@ export const BattleScreen: React.FC = () => {
       maxHP: 20,
       currentHP: 20,
       armorClass: 10,
+      initiative: 0,
     };
     addParticipant(newPlayer);
   };
@@ -40,6 +48,7 @@ export const BattleScreen: React.FC = () => {
       maxHP: 10,
       currentHP: 10,
       armorClass: 12,
+      initiative: Math.floor(Math.random() * 20) + 1, // Случайная инициатива для монстра
     };
     addParticipant(newMonster);
   };
@@ -54,7 +63,15 @@ export const BattleScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
-        <Text style={styles.title}>Бой</Text>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <Text style={styles.title}>Бой</Text>
+          <TouchableOpacity 
+            onPress={sortParticipants} 
+            style={[styles.diceButton, {marginLeft: 10}]}
+          >
+            <Text style={{fontSize: 16}}>⇅ Иниц</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.controls}>
           <TouchableOpacity onPress={() => setDiceRollerVisible(true)} style={styles.diceButton}>
             <Text style={styles.diceButtonText}>🎲</Text>
@@ -79,6 +96,7 @@ export const BattleScreen: React.FC = () => {
             participant={selectedParticipant}
             onUpdateHP={updateHP}
             onRemove={handleRemove}
+            onUpdateInitiative={updateInitiative}
           />
         </View>
       </View>

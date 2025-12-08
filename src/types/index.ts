@@ -4,6 +4,7 @@ export interface Participant {
   maxHP: number;
   currentHP: number;
   armorClass: number;
+  initiative?: number;
 }
 
 export interface Player extends Participant {

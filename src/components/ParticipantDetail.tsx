@@ -6,14 +6,17 @@ interface ParticipantDetailProps {
   participant: Participant | null;
   onUpdateHP: (id: string, delta: number) => void;
   onRemove: (id: string) => void;
+  onUpdateInitiative?: (id: string, value: number) => void;
 }
 
 export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({ 
   participant, 
   onUpdateHP,
-  onRemove
+  onRemove,
+  onUpdateInitiative
 }) => {
   const [hpInput, setHpInput] = useState('1');
+  const [initInput, setInitInput] = useState('');
 
   if (!participant) {
     return (
@@ -22,6 +25,11 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
       </View>
     );
   }
+
+  // Обновляем initInput при смене участника
+  React.useEffect(() => {
+    setInitInput(participant.initiative?.toString() || '');
+  }, [participant.id, participant.initiative]);
 
   const hpPercentage = (participant.currentHP / participant.maxHP) * 100;
   const hpColor = hpPercentage > 60 ? '#4caf50' : hpPercentage > 30 ? '#ff9800' : '#f44336';
@@ -42,10 +50,30 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
     }
   };
 
+  const handleInitChange = (text: string) => {
+    setInitInput(text);
+    const val = parseInt(text);
+    if (!isNaN(val) && onUpdateInitiative) {
+      onUpdateInitiative(participant.id, val);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.name}>{participant.name}</Text>
+        <View>
+            <Text style={styles.name}>{participant.name}</Text>
+            <View style={styles.initContainer}>
+                <Text style={styles.initLabel}>Иниц:</Text>
+                <TextInput 
+                    style={styles.initInput}
+                    value={initInput}
+                    onChangeText={handleInitChange}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                />
+            </View>
+        </View>
         <TouchableOpacity 
           style={styles.deleteButton} 
           onPress={() => onRemove(participant.id)}
@@ -121,6 +149,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     flex: 1,
+  },
+  initContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  initLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginRight: 8,
+  },
+  initInput: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    minWidth: 40,
+    textAlign: 'center',
+    fontSize: 16,
+    padding: 2,
   },
   deleteButton: {
     backgroundColor: '#ffebee',

@@ -7,6 +7,8 @@ interface BattleContextType {
   addParticipant: (participant: Participant) => void;
   removeParticipant: (id: string) => void;
   updateHP: (id: string, delta: number) => void;
+  updateInitiative: (id: string, value: number) => void;
+  sortParticipants: () => void;
 }
 
 const BattleContext = createContext<BattleContextType | undefined>(undefined);
@@ -59,8 +61,36 @@ export const BattleProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     );
   };
 
+  const updateInitiative = (id: string, value: number) => {
+    setParticipants((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        return { ...p, initiative: value };
+      })
+    );
+  };
+
+  const sortParticipants = () => {
+    setParticipants((prev) =>
+      [...prev].sort((a, b) => {
+        const initA = a.initiative || 0;
+        const initB = b.initiative || 0;
+        return initB - initA; // По убыванию
+      })
+    );
+  };
+
   return (
-    <BattleContext.Provider value={{ participants, addParticipant, removeParticipant, updateHP }}>
+    <BattleContext.Provider 
+      value={{ 
+        participants, 
+        addParticipant, 
+        removeParticipant, 
+        updateHP,
+        updateInitiative,
+        sortParticipants
+      }}
+    >
       {children}
     </BattleContext.Provider>
   );
