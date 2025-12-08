@@ -6,7 +6,14 @@ import { DiceRoller } from '../components/DiceRoller';
 import { useBattle } from '../context/BattleContext';
 import { Participant } from '../types';
 
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Battle'>;
+
 export const BattleScreen: React.FC = () => {
+  const navigation = useNavigation<NavigationProp>();
   const { 
     participants, 
     addParticipant, 
@@ -80,6 +87,13 @@ export const BattleScreen: React.FC = () => {
           </TouchableOpacity>
           <View style={{ width: 10 }} />
           <Button title="+ Игрок" onPress={handleAddPlayer} />
+          <View style={{ width: 10 }} />
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('Import')} 
+            style={[styles.diceButton, { backgroundColor: '#e1bee7', marginRight: 0 }]}
+          >
+            <Text style={{fontSize: 16}}>📥</Text>
+          </TouchableOpacity>
           <View style={{ width: 10 }} />
           <Button title="+ Монстр" onPress={handleAddMonster} color="#ff9800" />
         </View>

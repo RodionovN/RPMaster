@@ -98,17 +98,18 @@ const styles = StyleSheet.create({
   diceContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: 8, // Используем gap для равных отступов
+    justifyContent: 'center', // Центрируем
     marginBottom: 20,
   },
   diceButton: {
-    width: '30%', // По 3 кнопки в ряд
-    aspectRatio: 1.2, // Немного прямоугольные
+    width: '22%', // 4 в ряд (100% / 4 - отступы)
+    aspectRatio: 1,
     backgroundColor: '#e3f2fd',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: '#2196f3',
   },
