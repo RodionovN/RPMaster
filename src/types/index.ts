@@ -2,6 +2,8 @@ export interface Attack {
   name: string;
   damage: string;
   modifier: string;
+  stat?: string; // Характеристика, используемая для атаки (str, dex, etc.)
+  isProficient?: boolean; // Владение оружием
 }
 
 export interface Ability {
@@ -26,6 +28,8 @@ export interface Participant {
   maxHP: number;
   currentHP: number;
   armorClass: number;
+  level?: number;
+  proficiencyBonus?: number;
   initiative?: number;
   conditions?: string[];
   attacks?: Attack[];

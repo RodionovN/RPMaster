@@ -25,6 +25,7 @@ export const BattleScreen: React.FC = () => {
     updateInitiative,
     addCondition,
     removeCondition,
+    updateParticipant,
     sortParticipants,
     nextTurn,
     prevTurn
@@ -151,6 +152,7 @@ export const BattleScreen: React.FC = () => {
             onAddCondition={addCondition}
             onRemoveCondition={removeCondition}
             onRoll={handleRollRequest}
+            onUpdate={updateParticipant}
           />
         </View>
       </View>

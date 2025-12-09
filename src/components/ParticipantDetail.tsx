@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { Participant } from '../types';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Button, TextInput, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { Participant, Stat } from '../types';
 import { ConditionModal } from './ConditionModal';
 import { CONDITIONS } from '../utils/conditions';
+import { calculateModifier } from '../utils/dndUtils';
 
 interface ParticipantDetailProps {
   participant: Participant | null;
@@ -12,6 +13,7 @@ interface ParticipantDetailProps {
   onAddCondition?: (id: string, conditionId: string) => void;
   onRemoveCondition?: (id: string, conditionId: string) => void;
   onRoll?: (formula: string) => void;
+  onUpdate?: (id: string, data: Partial<Participant>) => void;
 }
 
 export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({ 
@@ -21,17 +23,28 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
   onUpdateInitiative,
   onAddCondition,
   onRemoveCondition,
-  onRoll
+  onRoll,
+  onUpdate
 }) => {
   const [hpInput, setHpInput] = useState('1');
   const [initInput, setInitInput] = useState('');
   const [isConditionModalVisible, setConditionModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<'main' | 'attacks' | 'abilities' | 'stats'>('main');
+  const [isEditing, setIsEditing] = useState(false);
 
-  // Обновляем initInput при смене участника
-  React.useEffect(() => {
+  // Edit form state
+  const [editName, setEditName] = useState('');
+  const [editHP, setEditHP] = useState('');
+  const [editAC, setEditAC] = useState('');
+  const [editLevel, setEditLevel] = useState('');
+
+  useEffect(() => {
     if (participant) {
       setInitInput(participant.initiative?.toString() || '');
+      setEditName(participant.name);
+      setEditHP(participant.maxHP.toString());
+      setEditAC(participant.armorClass.toString());
+      setEditLevel(participant.level?.toString() || '1');
     }
   }, [participant?.id, participant?.initiative]);
 
@@ -42,6 +55,22 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
       </View>
     );
   }
+
+  const handleSave = () => {
+    if (onUpdate) {
+        const level = parseInt(editLevel) || 1;
+        const pb = Math.ceil(level / 4) + 1;
+        
+        onUpdate(participant.id, {
+            name: editName,
+            maxHP: parseInt(editHP) || 10,
+            armorClass: parseInt(editAC) || 10,
+            level: level,
+            proficiencyBonus: pb
+        });
+        setIsEditing(false);
+    }
+  };
 
   const hpPercentage = (participant.currentHP / participant.maxHP) * 100;
   const hpColor = hpPercentage > 60 ? '#4caf50' : hpPercentage > 30 ? '#ff9800' : '#f44336';
@@ -80,6 +109,45 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
       onAddCondition(participant.id, conditionId);
     }
   };
+
+  const handleRoll = (formula: string) => {
+    if (onRoll) {
+      onRoll(formula);
+    }
+  };
+
+  const renderEditForm = () => (
+    <ScrollView style={styles.editForm}>
+        <Text style={styles.editLabel}>Имя:</Text>
+        <TextInput style={styles.editInput} value={editName} onChangeText={setEditName} />
+        
+        <View style={styles.row}>
+            <View style={styles.halfInput}>
+                <Text style={styles.editLabel}>Макс. HP:</Text>
+                <TextInput style={styles.editInput} value={editHP} onChangeText={setEditHP} keyboardType="number-pad" />
+            </View>
+            <View style={styles.halfInput}>
+                <Text style={styles.editLabel}>AC:</Text>
+                <TextInput style={styles.editInput} value={editAC} onChangeText={setEditAC} keyboardType="number-pad" />
+            </View>
+        </View>
+
+        <View style={styles.row}>
+            <View style={styles.halfInput}>
+                <Text style={styles.editLabel}>Уровень:</Text>
+                <TextInput style={styles.editInput} value={editLevel} onChangeText={setEditLevel} keyboardType="number-pad" />
+            </View>
+            <View style={styles.halfInput}>
+                <Text style={styles.editLabel}>Бонус мастерства:</Text>
+                <Text style={styles.staticValue}>+{Math.ceil((parseInt(editLevel) || 1) / 4) + 1}</Text>
+            </View>
+        </View>
+
+        <Button title="Сохранить" onPress={handleSave} color="#2196f3" />
+        <View style={{height: 10}} />
+        <Button title="Отмена" onPress={() => setIsEditing(false)} color="#757575" />
+    </ScrollView>
+  );
 
   const activeConditions = participant.conditions || [];
 
@@ -125,6 +193,11 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
           <Text style={[styles.statValue, { color: hpColor }]}>
             {participant.currentHP} / {participant.maxHP}
           </Text>
+        </View>
+
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>Уровень</Text>
+          <Text style={styles.statValue}>{participant.level || 1} (PB: +{participant.proficiencyBonus || 2})</Text>
         </View>
       </View>
 
@@ -179,29 +252,49 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
     </>
   );
 
-  const handleRoll = (formula: string) => {
-    if (onRoll) {
-      onRoll(formula);
-    }
-  };
-
   const renderAttacks = () => (
     <ScrollView style={styles.scrollContent}>
-      {participant.attacks?.map((attack, index) => (
-        <View key={index} style={styles.listItem}>
-          <Text style={styles.itemName}>{attack.name}</Text>
-          <View style={styles.attackRolls}>
-            <TouchableOpacity onPress={() => handleRoll(attack.damage)}>
-              <Text style={styles.itemDetail}>Урон: <Text style={styles.clickable}>{attack.damage}</Text></Text>
-            </TouchableOpacity>
-            {attack.modifier && (
-                <TouchableOpacity onPress={() => handleRoll(`1d20${attack.modifier.startsWith('+') || attack.modifier.startsWith('-') ? attack.modifier : '+' + attack.modifier}`)}>
-                    <Text style={styles.itemDetail}>Мод: <Text style={styles.clickable}>{attack.modifier}</Text></Text>
+      {participant.attacks?.map((attack, index) => {
+        // Рассчитываем полный модификатор атаки: (statMod + proficiency)
+        let hitBonus = 0;
+        let dmgBonus = 0;
+        
+        // Пытаемся найти модификатор характеристики, если он задан как строка 'str', 'dex' и т.д.
+        if (attack.stat && participant.stats) {
+            const stat = participant.stats.find(s => s.name.toLowerCase() === attack.stat?.toLowerCase());
+            if (stat) {
+                hitBonus = stat.modifier;
+                dmgBonus = stat.modifier;
+            }
+        } else {
+            // Если stat не задан, пробуем распарсить старый формат модификатора "+5"
+            hitBonus = parseInt(attack.modifier) || 0;
+            dmgBonus = parseInt(attack.modifier) || 0;
+        }
+
+        if (attack.isProficient) {
+            hitBonus += (participant.proficiencyBonus || 2);
+        }
+
+        const hitSign = hitBonus >= 0 ? '+' : '';
+        const dmgSign = dmgBonus >= 0 ? '+' : '';
+
+        return (
+            <View key={index} style={styles.listItem}>
+            <Text style={styles.itemName}>{attack.name}</Text>
+            <View style={styles.attackRolls}>
+                <TouchableOpacity onPress={() => handleRoll(attack.damage + (dmgBonus ? `${dmgSign}${dmgBonus}` : ''))}>
+                <Text style={styles.itemDetail}>Урон: <Text style={styles.clickable}>{attack.damage} {dmgBonus ? `(${dmgSign}${dmgBonus})` : ''}</Text></Text>
                 </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      ))}
+                
+                <TouchableOpacity onPress={() => handleRoll(`1d20${hitSign}${hitBonus}`)}>
+                    <Text style={styles.itemDetail}>Атака: <Text style={styles.clickable}>1d20{hitSign}{hitBonus}</Text></Text>
+                </TouchableOpacity>
+            </View>
+            <Text style={styles.statRef}>Характеристика: {attack.stat?.toUpperCase() || 'Авто'} {attack.isProficient ? '(Владение)' : ''}</Text>
+            </View>
+        );
+      })}
       {(!participant.attacks || participant.attacks.length === 0) && (
         <Text style={styles.emptyText}>Нет данных об атаках</Text>
       )}
@@ -250,11 +343,22 @@ export const ParticipantDetail: React.FC<ParticipantDetailProps> = ({
     </ScrollView>
   );
 
+  if (isEditing) {
+      return (
+        <View style={styles.container}>
+            <Text style={styles.headerTitle}>Редактирование</Text>
+            {renderEditForm()}
+        </View>
+      );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
-            <Text style={styles.name}>{participant.name}</Text>
+        <View style={{flex: 1}}>
+            <TouchableOpacity onLongPress={() => setIsEditing(true)}>
+                <Text style={styles.name}>{participant.name} ✎</Text>
+            </TouchableOpacity>
             <View style={styles.initContainer}>
                 <Text style={styles.initLabel}>Иниц:</Text>
                 <TextInput 
@@ -314,11 +418,15 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
     paddingBottom: 10,
   },
+  headerTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 20,
+  },
   name: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
-    flex: 1,
   },
   initContainer: {
     flexDirection: 'row',
@@ -365,7 +473,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
@@ -522,6 +630,38 @@ const styles = StyleSheet.create({
   attackRolls: {
     flexDirection: 'row',
     gap: 16,
+  },
+  editForm: {
+      flex: 1,
+  },
+  editLabel: {
+      fontSize: 16,
+      marginBottom: 4,
+      color: '#666',
+  },
+  editInput: {
+      borderWidth: 1,
+      borderColor: '#ddd',
+      borderRadius: 4,
+      padding: 10,
+      fontSize: 16,
+      marginBottom: 16,
+  },
+  row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+  },
+  halfInput: {
+      width: '48%',
+  },
+  staticValue: {
+      fontSize: 18,
+      padding: 10,
+      fontWeight: 'bold',
+  },
+  statRef: {
+      fontSize: 12,
+      color: '#999',
+      marginTop: 4,
   }
 });
-

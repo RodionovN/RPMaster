@@ -20,7 +20,14 @@ export const parseCharacterJson = (jsonContent: string): Participant | null => {
     const hpMax = parseInt(charData.vitality?.['hp-max']?.value) || 10;
     const hpCurrent = parseInt(charData.vitality?.['hp-current']?.value) || hpMax;
     const ac = parseInt(charData.vitality?.ac?.value) || 10;
-    const proficiencyBonus = parseInt(charData.proficiency?.value) || 2; // Бонус мастерства
+    
+    // Пытаемся найти уровень, если нет - считаем 1
+    const level = parseInt(charData.meta?.level?.value) || 1; 
+    
+    // Бонус мастерства из JSON или расчет по уровню: ceil(level/4) + 1
+    // 1-4: +2, 5-8: +3, 9-12: +4, 13-16: +5, 17-20: +6
+    const calculatedPB = Math.ceil(level / 4) + 1;
+    const proficiencyBonus = parseInt(charData.proficiency?.value) || calculatedPB; 
     
     // Генерируем уникальный ID
     const id = Date.now().toString();
@@ -57,8 +64,10 @@ export const parseCharacterJson = (jsonContent: string): Participant | null => {
             let mod = w.mod?.value || '';
             
             // Проверяем, является ли модификатор ссылкой на характеристику
-            if (mod && typeof mod === 'string' && statsMap[mod.toLowerCase()] !== undefined) {
-               const val = statsMap[mod.toLowerCase()];
+            let statKey = '';
+            if (w.mod?.value && typeof w.mod.value === 'string' && statsMap[w.mod.value.toLowerCase()] !== undefined) {
+               statKey = w.mod.value.toLowerCase();
+               const val = statsMap[statKey];
                mod = val >= 0 ? `+${val}` : `${val}`;
             }
 
@@ -66,6 +75,8 @@ export const parseCharacterJson = (jsonContent: string): Participant | null => {
               name: w.name.value,
               damage: w.dmg?.value || '',
               modifier: mod,
+              stat: statKey,
+              isProficient: w.isProf // В LSS может быть флаг isProf для оружия
             });
           }
         } catch (e) {
@@ -127,6 +138,8 @@ export const parseCharacterJson = (jsonContent: string): Participant | null => {
       abilities,
       stats,
       skills,
+      level,
+      proficiencyBonus,
     };
   } catch (error) {
     console.error('JSON Parse Error:', error);
