@@ -1,16 +1,23 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useLibrary } from '../context/LibraryContext';
 import { useBattle } from '../context/BattleContext';
 import { Participant } from '../types';
 import { useNavigation } from '@react-navigation/native';
 import { useSettings } from '../context/SettingsContext';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 export const LibraryScreen: React.FC = () => {
   const { library, removeFromLibrary } = useLibrary();
   const { addParticipant } = useBattle();
   const { theme } = useSettings();
   const navigation = useNavigation();
+  
+  const [deleteModal, setDeleteModal] = useState<{ visible: boolean; id: string | null; name: string }>({
+    visible: false,
+    id: null,
+    name: '',
+  });
 
   const handleAddToBattle = (participant: Participant) => {
     // Создаем копию участника с новым ID для боя
@@ -20,18 +27,23 @@ export const LibraryScreen: React.FC = () => {
       initiative: 0, // Сбрасываем инициативу
     };
     addParticipant(newParticipant);
-    Alert.alert('Успешно', `${participant.name} добавлен в бой!`);
+    
+    if (Platform.OS === 'web') {
+        alert('Успешно: ' + participant.name + ' добавлен в бой!');
+    } else {
+        Alert.alert('Успешно', `${participant.name} добавлен в бой!`);
+    }
   };
 
   const confirmDelete = (id: string, name: string) => {
-    Alert.alert(
-      'Удаление',
-      `Вы уверены, что хотите удалить ${name} из библиотеки?`,
-      [
-        { text: 'Отмена', style: 'cancel' },
-        { text: 'Удалить', style: 'destructive', onPress: () => removeFromLibrary(id) },
-      ]
-    );
+    setDeleteModal({ visible: true, id, name });
+  };
+
+  const handleDelete = () => {
+    if (deleteModal.id) {
+      removeFromLibrary(deleteModal.id);
+      setDeleteModal({ visible: false, id: null, name: '' });
+    }
   };
 
   const renderItem = ({ item }: { item: Participant }) => (
@@ -76,6 +88,16 @@ export const LibraryScreen: React.FC = () => {
           contentContainerStyle={styles.list}
         />
       )}
+
+      <ConfirmationModal
+        visible={deleteModal.visible}
+        title="Удаление персонажа"
+        message={`Вы уверены, что хотите удалить ${deleteModal.name} из библиотеки?`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteModal({ ...deleteModal, visible: false })}
+        confirmText="Удалить"
+        cancelText="Отмена"
+      />
     </View>
   );
 };
