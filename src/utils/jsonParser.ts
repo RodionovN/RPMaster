@@ -1,5 +1,6 @@
 import { Participant, Attack, Stat, Skill } from '../types';
 import { parseFeats } from './proseMirrorParser';
+import { calculateModifier } from './dndUtils';
 
 export const parseCharacterJson = (jsonContent: string): Participant | null => {
   try {
@@ -23,33 +24,46 @@ export const parseCharacterJson = (jsonContent: string): Participant | null => {
     // Генерируем уникальный ID
     const id = Date.now().toString();
 
+    // Парсинг характеристик (stats)
+    const stats: Stat[] = [];
+    const statsMap: Record<string, number> = {}; // Для быстрого поиска модификаторов
+
+    if (charData.stats) {
+      Object.keys(charData.stats).forEach(key => {
+        const stat = charData.stats[key];
+        if (stat) {
+          const value = stat.score || 10;
+          const modifier = calculateModifier(value); // Пересчитываем модификатор всегда для надежности
+          
+          stats.push({
+            name: stat.label || key.toUpperCase(),
+            value: value,
+            modifier: modifier
+          });
+          
+          // Сохраняем модификатор по ключу (например, 'str', 'dex')
+          statsMap[key.toLowerCase()] = modifier;
+        }
+      });
+    }
+
     // Парсинг атак
     const attacks: Attack[] = [];
     if (charData.weaponsList && Array.isArray(charData.weaponsList)) {
       charData.weaponsList.forEach((w: any) => {
         if (w.name?.value) {
+          let mod = w.mod?.value || '';
+          
+          // Проверяем, является ли модификатор ссылкой на характеристику
+          if (mod && typeof mod === 'string' && statsMap[mod.toLowerCase()] !== undefined) {
+             const val = statsMap[mod.toLowerCase()];
+             mod = val >= 0 ? `+${val}` : `${val}`;
+          }
+
           attacks.push({
             name: w.name.value,
             damage: w.dmg?.value || '',
-            modifier: w.mod?.value || '',
-          });
-        }
-      });
-    }
-
-    // Парсинг способностей (feats)
-    const abilities = parseFeats(charData.text?.feats);
-
-    // Парсинг характеристик (stats)
-    const stats: Stat[] = [];
-    if (charData.stats) {
-      Object.keys(charData.stats).forEach(key => {
-        const stat = charData.stats[key];
-        if (stat) {
-          stats.push({
-            name: stat.label || key.toUpperCase(),
-            value: stat.score || 10,
-            modifier: stat.modifier || 0
+            modifier: mod,
           });
         }
       });

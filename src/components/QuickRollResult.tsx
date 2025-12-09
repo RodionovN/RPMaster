@@ -10,6 +10,16 @@ interface QuickRollResultProps {
 export const QuickRollResult: React.FC<QuickRollResultProps> = ({ result, onClose }) => {
   if (!result) return null;
 
+  // Пытаемся извлечь модификатор из формулы для отображения
+  const formulaMatch = result.formula.match(/[\+\-]\s*(\d+)$/);
+  const modifier = formulaMatch ? parseInt(formulaMatch[0].replace(/\s/g, '')) : 0;
+  
+  // Формируем строку деталей: (кубики) + мод = итог
+  const rollsSum = result.rolls.reduce((a, b) => a + b, 0);
+  const rollsStr = result.rolls.length > 1 ? `(${result.rolls.join('+')})` : `${result.rolls[0]}`;
+  const modStr = modifier !== 0 ? ` ${modifier > 0 ? '+' : '-'} ${Math.abs(modifier)}` : '';
+  const detailStr = `${rollsStr}${modStr} = ${result.total}`;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -21,9 +31,7 @@ export const QuickRollResult: React.FC<QuickRollResultProps> = ({ result, onClos
       <View style={styles.content}>
         <Text style={styles.total}>{result.total}</Text>
         <Text style={styles.details}>
-            {result.rolls.length > 1 ? result.rolls.join(' + ') : ''} 
-            {result.rolls.length > 1 ? ' = ' : ''} 
-            {result.total}
+            {detailStr}
         </Text>
       </View>
     </View>
