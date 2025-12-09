@@ -51,23 +51,30 @@ export const parseCharacterJson = (jsonContent: string): Participant | null => {
     const attacks: Attack[] = [];
     if (charData.weaponsList && Array.isArray(charData.weaponsList)) {
       charData.weaponsList.forEach((w: any) => {
-        if (w.name?.value) {
-          let mod = w.mod?.value || '';
-          
-          // Проверяем, является ли модификатор ссылкой на характеристику
-          if (mod && typeof mod === 'string' && statsMap[mod.toLowerCase()] !== undefined) {
-             const val = statsMap[mod.toLowerCase()];
-             mod = val >= 0 ? `+${val}` : `${val}`;
-          }
+        try {
+          if (w.name?.value) {
+            let mod = w.mod?.value || '';
+            
+            // Проверяем, является ли модификатор ссылкой на характеристику
+            if (mod && typeof mod === 'string' && statsMap[mod.toLowerCase()] !== undefined) {
+               const val = statsMap[mod.toLowerCase()];
+               mod = val >= 0 ? `+${val}` : `${val}`;
+            }
 
-          attacks.push({
-            name: w.name.value,
-            damage: w.dmg?.value || '',
-            modifier: mod,
-          });
+            attacks.push({
+              name: w.name.value,
+              damage: w.dmg?.value || '',
+              modifier: mod,
+            });
+          }
+        } catch (e) {
+            console.warn('Error parsing weapon:', w, e);
         }
       });
     }
+
+    // Парсинг способностей (feats)
+    const abilities = parseFeats(charData.text?.feats);
 
     // Парсинг навыков (skills)
     const skills: Skill[] = [];
