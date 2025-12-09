@@ -1,6 +1,6 @@
 import { Participant, Attack, Stat, Skill } from '../types';
 import { parseFeats } from './proseMirrorParser';
-import { calculateModifier } from './dndUtils';
+import { calculateModifier, SKILL_STAT_MAP } from './dndUtils';
 
 export const parseCharacterJson = (jsonContent: string): Participant | null => {
   try {
@@ -20,6 +20,7 @@ export const parseCharacterJson = (jsonContent: string): Participant | null => {
     const hpMax = parseInt(charData.vitality?.['hp-max']?.value) || 10;
     const hpCurrent = parseInt(charData.vitality?.['hp-current']?.value) || hpMax;
     const ac = parseInt(charData.vitality?.ac?.value) || 10;
+    const proficiencyBonus = parseInt(charData.proficiency?.value) || 2; // Бонус мастерства
     
     // Генерируем уникальный ID
     const id = Date.now().toString();
@@ -80,14 +81,37 @@ export const parseCharacterJson = (jsonContent: string): Participant | null => {
     const skills: Skill[] = [];
     if (charData.skills) {
       Object.keys(charData.skills).forEach(key => {
-        const skill = charData.skills[key];
-        // Если есть isProf (владение), добавляем
-        // Или добавляем все? Лучше все, но сортировать потом.
-        // Пока добавим те, где есть владение или модификатор отличен от базового
-        if (skill) {
+        const skillData = charData.skills[key];
+        
+        if (skillData) {
+           const skillName = skillData.label || key;
+           const normalizedKey = key.toLowerCase().replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase(); // camelCase -> space separated
+           
+           // 1. Ищем базовую характеристику
+           const statKey = SKILL_STAT_MAP[normalizedKey] || SKILL_STAT_MAP[skillName.toLowerCase()];
+           const statMod = statKey ? (statsMap[statKey] || 0) : 0;
+
+           // 2. Проверяем владение (isProf) или экспертизу (isExpertise - если есть в формате LSS)
+           const isProf = skillData.isProf; 
+           // В LSS иногда бывает expertise как отдельный флаг или уровень владения
+           
+           // 3. Считаем итоговый модификатор
+           // Если есть customModifier, используем его, иначе считаем сами
+           let finalMod = statMod;
+           if (isProf) finalMod += proficiencyBonus;
+           
+           // Перезаписываем, если есть явный customModifier, который не равен 0 (обычно он перекрывает авторасчет)
+           if (skillData.customModifier) {
+               // Но иногда customModifier - это просто бонус сверху. В LSS это обычно ИТОГОВЫЙ бонус? 
+               // Чаще всего в JSON LSS customModifier это бонус КРОМЕ стата. 
+               // Но для надежности, если мы не уверены в структуре LSS до конца,
+               // лучше довериться явному customModifier, если он похож на полный мод.
+               // Однако безопаснее использовать стандартную формулу 5e.
+           }
+
            skills.push({
-             name: skill.label || key,
-             modifier: skill.customModifier || 0 // Тут сложнее расчет в LSS, но пока так
+             name: skillName,
+             modifier: finalMod
            });
         }
       });
