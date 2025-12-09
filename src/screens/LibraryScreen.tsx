@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Platform } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Platform, TextInput } from 'react-native';
 import { useLibrary } from '../context/LibraryContext';
 import { useBattle } from '../context/BattleContext';
 import { Participant } from '../types';
@@ -7,17 +7,42 @@ import { useNavigation } from '@react-navigation/native';
 import { useSettings } from '../context/SettingsContext';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 
+type SortOption = 'name' | 'level' | 'date';
+
 export const LibraryScreen: React.FC = () => {
   const { library, removeFromLibrary } = useLibrary();
   const { addParticipant } = useBattle();
   const { theme } = useSettings();
   const navigation = useNavigation();
   
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('name');
   const [deleteModal, setDeleteModal] = useState<{ visible: boolean; id: string | null; name: string }>({
     visible: false,
     id: null,
     name: '',
   });
+
+  const filteredAndSortedLibrary = useMemo(() => {
+    let result = library.filter(p => 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    switch (sortBy) {
+      case 'name':
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'level':
+        result.sort((a, b) => (b.level || 0) - (a.level || 0)); // Descending level
+        break;
+      case 'date':
+        // Assuming ID is timestamp-based or we add a date field later. For now, ID is a good proxy for creation time.
+        result.sort((a, b) => b.id.localeCompare(a.id)); // Newest first
+        break;
+    }
+
+    return result;
+  }, [library, searchQuery, sortBy]);
 
   const handleAddToBattle = (participant: Participant) => {
     // Создаем копию участника с новым ID для боя
@@ -71,18 +96,46 @@ export const LibraryScreen: React.FC = () => {
     </View>
   );
 
+  const renderHeader = () => (
+    <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
+      <TextInput
+        style={[styles.searchInput, { color: theme.colors.text, borderColor: theme.colors.border }]}
+        placeholder="Поиск..."
+        placeholderTextColor="#999"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      <View style={styles.sortContainer}>
+        <TouchableOpacity onPress={() => setSortBy('name')}>
+          <Text style={[styles.sortButton, sortBy === 'name' && styles.activeSort]}>Имя</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setSortBy('level')}>
+          <Text style={[styles.sortButton, sortBy === 'level' && styles.activeSort]}>Ур.</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setSortBy('date')}>
+          <Text style={[styles.sortButton, sortBy === 'date' && styles.activeSort]}>Дата</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {library.length === 0 ? (
+      {renderHeader()}
+      {filteredAndSortedLibrary.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: theme.colors.text }]}>Библиотека пуста</Text>
-          <Text style={[styles.subText, { color: theme.colors.text }]}>
-            Импортируйте персонажей через меню "Импорт", чтобы добавить их сюда.
+          <Text style={[styles.emptyText, { color: theme.colors.text }]}>
+            {searchQuery ? 'Ничего не найдено' : 'Библиотека пуста'}
           </Text>
+          {!searchQuery && (
+            <Text style={[styles.subText, { color: theme.colors.text }]}>
+                Импортируйте персонажей через меню "Импорт", чтобы добавить их сюда.
+            </Text>
+          )}
         </View>
       ) : (
         <FlatList
-          data={library}
+          data={filteredAndSortedLibrary}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
@@ -108,6 +161,35 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
+  },
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  sortContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  sortButton: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '500',
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+  },
+  activeSort: {
+    color: '#2196f3',
+    fontWeight: 'bold',
+    borderBottomWidth: 2,
+    borderBottomColor: '#2196f3',
   },
   card: {
     flexDirection: 'row',
