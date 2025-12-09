@@ -28,26 +28,38 @@ export const rollDice = (count: number, sides: number, modifier: number = 0): Ro
 };
 
 export const parseAndRoll = (expression: string): RollResult => {
-  // Remove all spaces and convert to lowercase
-  const cleanExpression = expression.replace(/\s/g, '').toLowerCase();
-  
-  // Regex to match NdM (+/-) K
-  const match = cleanExpression.match(/^(\d+)d(\d+)([\+\-]\d+)?$/);
+  // Нормализуем строку: нижний регистр, убираем пробелы вокруг плюсов/минусов для упрощения поиска
+  const norm = expression.toLowerCase();
+
+  // 1. Ищем полную формулу вида NdM + K (или -K)
+  // Примеры: "1d6+2", "2d6", "1d20-1"
+  // Разрешаем пробелы между частями
+  const diceRegex = /(\d+)\s*d\s*(\d+)(?:\s*([\+\-])\s*(\d+))?/;
+  const match = norm.match(diceRegex);
   
   if (match) {
     const count = parseInt(match[1]);
     const sides = parseInt(match[2]);
-    const modifier = match[3] ? parseInt(match[3]) : 0;
+    let modifier = 0;
+    
+    if (match[3] && match[4]) {
+      modifier = parseInt(match[4]);
+      if (match[3] === '-') modifier = -modifier;
+    }
+    
     return rollDice(count, sides, modifier);
   }
 
-  // Support just modifier (e.g. "+5" or "-2" -> 1d20+5) - often used for checks
-  const modMatch = cleanExpression.match(/^([\+\-]?\d+)$/);
-  if (modMatch) {
-     const modifier = parseInt(modMatch[1]);
+  // 2. Ищем просто модификатор (для проверок характеристик), если это просто число с +/-
+  // Пример: "+5", "-2", "5" (интерпретируем как d20+5)
+  // Строгий матч, чтобы не путать с просто числами в тексте
+  const modRegex = /^[\+\-]?\s*\d+$/;
+  if (norm.replace(/\s/g, '').match(modRegex)) {
+     const modifier = parseInt(norm.replace(/\s/g, ''));
      return rollDice(1, 20, modifier);
   }
 
+  console.warn(`Failed to parse formula: "${expression}"`);
   throw new Error(`Invalid dice formula: ${expression}`);
 };
 
