@@ -28,8 +28,11 @@ export const rollDice = (count: number, sides: number, modifier: number = 0): Ro
 };
 
 export const parseAndRoll = (expression: string): RollResult => {
-  // Simple parser for NdM+K format
-  const match = expression.toLowerCase().match(/^(\d+)d(\d+)([\+\-]\d+)?$/);
+  // Remove all spaces and convert to lowercase
+  const cleanExpression = expression.replace(/\s/g, '').toLowerCase();
+  
+  // Regex to match NdM (+/-) K
+  const match = cleanExpression.match(/^(\d+)d(\d+)([\+\-]\d+)?$/);
   
   if (match) {
     const count = parseInt(match[1]);
@@ -38,6 +41,13 @@ export const parseAndRoll = (expression: string): RollResult => {
     return rollDice(count, sides, modifier);
   }
 
-  throw new Error('Invalid dice formula');
+  // Support just modifier (e.g. "+5" or "-2" -> 1d20+5) - often used for checks
+  const modMatch = cleanExpression.match(/^([\+\-]?\d+)$/);
+  if (modMatch) {
+     const modifier = parseInt(modMatch[1]);
+     return rollDice(1, 20, modifier);
+  }
+
+  throw new Error(`Invalid dice formula: ${expression}`);
 };
 

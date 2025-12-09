@@ -71,9 +71,16 @@ export const ImportScreen: React.FC = () => {
     if (preview) {
       addParticipant(preview);
       addToLibrary(preview);
-      Alert.alert('Успех', `${preview.name} добавлен в библиотеку и в бой!`, [
-        { text: 'ОК', onPress: () => navigation.navigate('Battle') }
-      ]);
+      
+      if (Platform.OS === 'web') {
+        // On web, Alert with buttons might behave differently or be annoying
+        alert(`Успех: ${preview.name} добавлен в библиотеку и в бой!`);
+        navigation.navigate('Battle');
+      } else {
+        Alert.alert('Успех', `${preview.name} добавлен в библиотеку и в бой!`, [
+            { text: 'ОК', onPress: () => navigation.navigate('Battle') }
+        ]);
+      }
     }
   };
 
