@@ -32,9 +32,10 @@ export const parseAndRoll = (expression: string): RollResult => {
   const norm = expression.toLowerCase();
 
   // 1. Ищем полную формулу вида NdM + K (или -K)
-  // Примеры: "1d6+2", "2d6", "1d20-1"
+  // Примеры: "1d6+2", "2d6", "1d20-1", "2к6+3" (русская к)
   // Разрешаем пробелы между частями
-  const diceRegex = /(\d+)\s*d\s*(\d+)(?:\s*([\+\-])\s*(\d+))?/;
+  // [dк] - ищем английскую d или русскую к
+  const diceRegex = /(\d+)\s*[dк]\s*(\d+)(?:\s*([\+\-])\s*(\d+))?/;
   const match = norm.match(diceRegex);
   
   if (match) {
